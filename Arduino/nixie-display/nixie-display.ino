@@ -10,15 +10,15 @@
 #define UPDATE_DELAY BUTTON_SUSTAIN_INTERVAL / 2
 
 const byte SR_PINS[][4] = {
-  { 3, 1, 0, 2 },
   { 7, 5, 4, 6 },
-  { 3+8, 1+8, 0+8, 2+8 },
-  { 7+8, 5+8, 4+8, 6+8 }
+  { 3, 1, 0, 2 },
+  { 7+8, 5+8, 4+8, 6+8 },
+  { 3+8, 1+8, 0+8, 2+8 }
 };
 
 const byte DOTS_PIN = 0;
 
-ShiftRegister74HC595<2> sr(3, 1, 2);
+ShiftRegister74HC595<2> sr(3, 2, 1);
 
 Button button1(10);
 Button button2(9);
