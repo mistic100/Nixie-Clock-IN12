@@ -26,30 +26,34 @@ void saveTime() {
   Clock.setMinute(Minute);
 }
 
-void incHours(bool last) {
+void incHours(bool last, unsigned long count) {
   updating = true;
-  Hour++;
-  if (Hour == 24) {
-    Hour = 0;
+  if (count % 10 == 0) {
+    Hour++;
+    if (Hour == 24) {
+      Hour = 0;
+    }
+    showTime();
   }
-  showTime();
   if (last) {
     saveTime();
     updating = false;
   }
 }
 
-void incMinutes(bool last) {
+void incMinutes(bool last, unsigned long count) {
   updating = true;
-  Minute++;
-  if (Minute == 60) {
-    Minute = 0;
-    Hour++;
-    if (Hour == 24) {
-      Hour = 0;
+  if (count % 10 == 0) {
+    Minute++;
+    if (Minute == 60) {
+      Minute = 0;
+      Hour++;
+      if (Hour == 24) {
+        Hour = 0;
+      }
     }
+    showTime();
   }
-  showTime();
   if (last) {
     saveTime();
     updating = false;
@@ -57,11 +61,11 @@ void incMinutes(bool last) {
 }
 
 void incHour() {
-  incHours(true);
+  incHours(true, 0);
 }
 
 void incMinute() {
-  incMinutes(true);
+  incMinutes(true, 0);
 }
 
 void doSetup() {

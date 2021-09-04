@@ -16,12 +16,13 @@ private:
 
   unsigned long pressTime = 0;
   uint8_t state = BTN_IDLE;
+  unsigned long sustainCount = 0;
   bool isDouble = false;
 
   void (*user_onSinglePress)(void);
   void (*user_onLongPress)(void);
   void (*user_onDoublePress)(void);
-  void (*user_onSustain)(bool);
+  void (*user_onSustain)(bool, unsigned long);
 
 public:
   Button(uint8_t _pin) {
@@ -41,7 +42,7 @@ public:
     user_onDoublePress = function;
   }
 
-  void onSustain(void (*function)(bool)) {
+  void onSustain(void (*function)(bool, unsigned long)) {
     user_onSustain = function;
   }
 
@@ -62,8 +63,9 @@ public:
           
         case BTN_SINGLE:
           if (millis() - pressTime > BUTTON_SUSTAIN_DELAY) {
+            sustainCount = 0;
             if (user_onSustain) {
-              user_onSustain(false);
+              user_onSustain(false, sustainCount);
             }
             pressTime = millis();
             state = BTN_SUSTAIN;
@@ -72,8 +74,9 @@ public:
           
         case BTN_SUSTAIN:
           if (millis() - pressTime > BUTTON_SUSTAIN_INTERVAL) {
+            sustainCount++;
             if (user_onSustain) {
-              user_onSustain(false);
+              user_onSustain(false, sustainCount);
             }
             pressTime = millis();
           }
@@ -95,8 +98,9 @@ public:
           break;
           
         case BTN_SUSTAIN:
+          sustainCount++;
           if (user_onSustain) {
-            user_onSustain(true);
+            user_onSustain(true, sustainCount);
           }
           state = BTN_IDLE;
           isDouble = false;

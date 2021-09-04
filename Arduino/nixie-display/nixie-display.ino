@@ -5,9 +5,9 @@
 #define MODE_COUNTER 2
 #define MODE_TEST 0
 
-#define MODE MODE_TEST
+#define MODE MODE_CLOCK
 
-#define UPDATE_DELAY BUTTON_SUSTAIN_INTERVAL / 2
+#define GLOBAL_UPDATE_DELAY BUTTON_SUSTAIN_INTERVAL / 2
 
 const byte SR_PINS[][4] = {
   { 7, 5, 4, 6 },
@@ -30,6 +30,11 @@ bool on = true;
 
 void onOff() {
   on = !on;
+  if (on) {
+    Serial.println("on");
+  } else {
+    Serial.println("off");
+  }
   if (!on) {
     sr.setAllHigh();
     dotsOff();
@@ -37,14 +42,23 @@ void onOff() {
 }
 
 void dotsOn() {
-  digitalWrite(DOTS_PIN, LOW);
-}
-
-void dotsOff() {
   digitalWrite(DOTS_PIN, HIGH);
 }
 
+void dotsOff() {
+  digitalWrite(DOTS_PIN, LOW);
+}
+
 void writeValue(uint8_t digit1, uint8_t digit2, uint8_t digit3, uint8_t digit4) {
+  Serial.print("Write ");
+  Serial.print(digit1);
+  Serial.print(" ");
+  Serial.print(digit2);
+  Serial.print(" ");
+  Serial.print(digit3);
+  Serial.print(" ");
+  Serial.print(digit4);
+  Serial.println();
   writeDigit(0, digit1);
   writeDigit(1, digit2);
   writeDigit(2, digit3);
@@ -53,22 +67,6 @@ void writeValue(uint8_t digit1, uint8_t digit2, uint8_t digit3, uint8_t digit4) 
 }
 
 void writeDigit(byte digit, uint8_t value) {
-  Serial.print("Digit ");
-  Serial.print(digit);
-  Serial.print(" = ");
-  Serial.print(value);
-
-  Serial.print(" A:");
-  Serial.print(value & 0x01);
-  Serial.print(" B:");
-  Serial.print((value & 0x02) >> 1);
-  Serial.print(" C:");
-  Serial.print((value & 0x04) >> 2);
-  Serial.print(" D:");
-  Serial.print((value & 0x08) >> 3);
-
-  Serial.println();
-  
   sr.setNoUpdate(SR_PINS[digit][0], value & 0x01);
   sr.setNoUpdate(SR_PINS[digit][1], (value & 0x02) >> 1);
   sr.setNoUpdate(SR_PINS[digit][2], (value & 0x04) >> 2);
@@ -97,7 +95,7 @@ void setup() {
 }
 
 void loop() {
-  if (millis() - lastUpdateTime >= UPDATE_DELAY) {
+  if (millis() - lastUpdateTime >= GLOBAL_UPDATE_DELAY) {
     button1.handle();
     button2.handle();
     button3.handle();

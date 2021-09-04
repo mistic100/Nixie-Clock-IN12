@@ -3,9 +3,7 @@
 #include <Wire.h>
 
 #define I2C_ADDRESS 0x2b
-#define UPDATE_DELAY 200
 
-unsigned long lastTime = 0;
 unsigned int nextVal = 0;
 unsigned int currentVal = 0;
 
@@ -30,26 +28,22 @@ void doSetup() {
 }
 
 void doLoop() {
-  if (millis() - lastTime >= UPDATE_DELAY) {
-    bool change = false;
-    if (currentVal < nextVal) {
-      currentVal++;
-      change = true;
-    }
-    if (currentVal > nextVal) {
-      currentVal--;
-      change = true;
-    }
-  
-    if (change) {
-      writeValue(
-        (currentVal / 1000) % 10, 
-        (currentVal / 100) % 10, 
-        (currentVal / 10) % 10,
-        currentVal % 10
-      );
-    }
-  
-    lastTime = millis();
+  bool change = false;
+  if (currentVal < nextVal) {
+    currentVal++;
+    change = true;
+  }
+  if (currentVal > nextVal) {
+    currentVal--;
+    change = true;
+  }
+
+  if (change) {
+    writeValue(
+      (currentVal / 1000) % 10, 
+      (currentVal / 100) % 10, 
+      (currentVal / 10) % 10,
+      currentVal % 10
+    );
   }
 }
