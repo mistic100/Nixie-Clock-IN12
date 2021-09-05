@@ -4,9 +4,13 @@
 
 This is a Nixie Clock design using IN-12 soviet neon tubes and an Arduino connected to a RTC clock. It also has a NeoPixels output.
 
+![](https://galerie.strangeplanet.fr/_data/i/upload/2021/09/05/20210905122303-39b00a0b-me.jpg)
+
+[Pictures on my website](https://galerie.strangeplanet.fr/index.php?/category/219)
+
 The Arduino code has three modes :
 - Clock : queries the current time on the RTC module
-- Display : receive raw value from I2C (this was used as a score counter for my [robotic association](https://github.com/ARIG-Robotique)
+- Display : receive raw value from I2C
 - Test : manual change each digit
 
 
@@ -85,6 +89,7 @@ TODO
 | part | qty. | notes |
 |--|--|--|
 | INS-1 holder | 1 |
+| leg | 2 |
 
 ## License
 
