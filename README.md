@@ -8,41 +8,25 @@ This is a Nixie Clock design using IN-12 soviet neon tubes and an Arduino connec
 
 [Pictures on my website](https://galerie.strangeplanet.fr/index.php?/category/219)
 
-The Arduino code has three modes :
-- Clock : queries the current time on the RTC module
-- Display : receive raw value from I2C
-- Test : manual change each digit
-
 
 ## Controls
 
-There are four connectors to wire push buttons.
+### On/off (button 1)
 
-### Clock
+The clock automatically shuts down after 15s.
 
-- Button 1 : on/off
-- Button 2 : change hours
-- Button 3 : change minutes
-- Button 4 : unused
+- Short press : on/off
+- Double press : switch to always on mode
 
-### Display
+### Set time (buttons 2 & 3)
 
-- Button 1 : on/off
-- Button 2 : random value
-- Button 3 : unused
-- Button 4 : unused
+- Short press : increment the value
+- Maintain press : increment the value faster
 
-### Test
+### NeoPixels (button 4)
 
-- Button 1 : change digit 1
-- Button 2 : change digit 2
-- Button 3 : change digit 3
-- Button 4 : change digit 4
-
-
-## NeoPixels
-
-TODO
+- Short press : change color/effect
+- Maintain press : change brightness
 
 
 ## Parts list

@@ -7,7 +7,7 @@
 
 #define BUTTON_DELAY 300
 #define BUTTON_SUSTAIN_DELAY 1000
-#define BUTTON_SUSTAIN_INTERVAL 40
+#define BUTTON_SUSTAIN_INTERVAL 50
 
 class Button {
   
@@ -22,7 +22,7 @@ private:
   void (*user_onSinglePress)(void);
   void (*user_onLongPress)(void);
   void (*user_onDoublePress)(void);
-  void (*user_onSustain)(bool, unsigned long);
+  void (*user_onSustain)(bool last, unsigned long ellapsed);
 
 public:
   Button(uint8_t _pin) {
@@ -42,7 +42,7 @@ public:
     user_onDoublePress = function;
   }
 
-  void onSustain(void (*function)(bool, unsigned long)) {
+  void onSustain(void (*function)(bool last, unsigned long ellapsed)) {
     user_onSustain = function;
   }
 
@@ -50,9 +50,6 @@ public:
     bool pressed = digitalRead(pin) == LOW;
 
     if (pressed) {
-      Serial.print(pin);
-      Serial.println(" pressed");
-      
       switch (state) {
         case BTN_RELEASE:
           isDouble = true;
@@ -63,9 +60,9 @@ public:
           
         case BTN_SINGLE:
           if (millis() - pressTime > BUTTON_SUSTAIN_DELAY) {
-            sustainCount = 0;
+            sustainCount = 1;
             if (user_onSustain) {
-              user_onSustain(false, sustainCount);
+              user_onSustain(false, sustainCount * BUTTON_SUSTAIN_INTERVAL);
             }
             pressTime = millis();
             state = BTN_SUSTAIN;
@@ -76,7 +73,7 @@ public:
           if (millis() - pressTime > BUTTON_SUSTAIN_INTERVAL) {
             sustainCount++;
             if (user_onSustain) {
-              user_onSustain(false, sustainCount);
+              user_onSustain(false, sustainCount * BUTTON_SUSTAIN_INTERVAL);
             }
             pressTime = millis();
           }
@@ -100,7 +97,7 @@ public:
         case BTN_SUSTAIN:
           sustainCount++;
           if (user_onSustain) {
-            user_onSustain(true, sustainCount);
+            user_onSustain(true, sustainCount * BUTTON_SUSTAIN_INTERVAL);
           }
           state = BTN_IDLE;
           isDouble = false;
