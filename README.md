@@ -2,7 +2,7 @@
 
 ([Check my first clock](https://github.com/mistic100/Nixie-Clock))
 
-This is a Nixie Clock design using IN-12 soviet neon tubes and an Arduino connected to a RTC clock. It also has a NeoPixels output.
+This is a Nixie Clock design using IN-12 soviet neon tubes and an Arduino connected to a RTC clock. It also has a NeoPixels output. A basic 3D printable "air case" is provided.
 
 ![](https://galerie.strangeplanet.fr/_data/i/upload/2021/09/05/20210905122303-39b00a0b-me.jpg)
 
@@ -69,11 +69,20 @@ The clock automatically shuts down after 15s.
 | 1x3 2.54mm male connector | 1 | NeoPixels strip |
 | 1x2 2.54mm male connector + jumper | 1 | disconnects the microcontroller 5V input |
 
-### 3D Printed
+### For "air case"
 | part | qty. | notes |
 |--|--|--|
-| INS-1 holder | 1 |
-| leg | 2 |
+| Micro-USB breakout board | 1 |
+| 5mm push button | 2 |
+| 12mm push button | 1 |
+| Dupont cables | |
+| hv-cover | 1 | 3d printed |
+| indic-holder | 1 | 3d printed |
+| leg-left | 1 | 3d printed |
+| leg-right | 1 | 3d printed |
+| plate-left | 1 | 3d printed |
+| plate-right | 1 | 3d printed |
+
 
 ## License
 
