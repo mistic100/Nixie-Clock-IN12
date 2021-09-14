@@ -59,6 +59,7 @@ The clock automatically shuts down after 15s.
 |--|--|--|
 | Seeeduino Xiao | 1 | [store](https://www.seeedstudio.com/Seeeduino-XIAO-Arduino-Microcontroller-SAMD21-Cortex-M0+-p-4426.html) |
 | DS3231 RTC module | 1 |
+| 1N4148 diode | 1 |
 
 ### Misc
 | part | qty. | notes |
@@ -67,7 +68,6 @@ The clock automatically shuts down after 15s.
 | IC terminal block | 1 |
 | 2x4 2.54mm male connector | 1 | Buttons |
 | 1x3 2.54mm male connector | 1 | NeoPixels strip |
-| 1x2 2.54mm male connector + jumper | 1 | disconnects the microcontroller 5V input |
 
 ### For "air case"
 | part | qty. | notes |
