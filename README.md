@@ -2,7 +2,9 @@
 
 ([Check my first clock](https://github.com/mistic100/Nixie-Clock))
 
-This is a Nixie Clock design using IN-12 soviet neon tubes and an Arduino connected to a RTC clock. It also has a NeoPixels output. A basic 3D printable "air case" is provided.
+This is a Nixie Clock design using IN-12 soviet neon tubes and an Arduino connected to a RTC clock. Two different cases are provided.
+
+It has a NeoPixels port and locations for SMD WS2812 LEDs (not tested because I added them after building my own clock).
 
 ![](https://galerie.strangeplanet.fr/_data/i/upload/2021/09/05/20210905122303-39b00a0b-me.jpg)
 
@@ -29,14 +31,30 @@ The clock automatically shuts down after 15s.
 - Maintain press : change brightness
 
 
+## Code
+
+### Librairies
+
+- ShiftRegister74HC595
+- FastLED
+- DS3231
+
+### Configuration
+
+- `AUTO_OFF_DELAY` automatic shutdown after X milliseconds, comment to disable
+- `INVERT` invert the digits (used for the full-case)
+- `LEDS_NUM` number of NeoPixels
+- `LEDS_TYPE` color order of NeoPixels
+
+
 ## Parts list
 
 ### Tubes
 | part | qty. | notes |
 |--|--|--|
-| IN-12 tubes | 4 |
-| INS-1 indicator | 2 |
-| IN-12 sockets pins | 48 |
+| IN-12 tubes | 4 | [store](https://tubes-store.com/product_info.php?products_id=38) |
+| INS-1 indicator | 2 | [store](https://tubes-store.com/product_info.php?products_id=1323) |
+| IN-12 sockets pins | 48 | [store](https://aliexpress.com/item/4001135699549.html) |
 
 ### Tubes power
 | part | qty. | notes |
@@ -48,7 +66,7 @@ The clock automatically shuts down after 15s.
 ### Drivers
 | part | qty. | notes |
 |--|--|--|
-| K155ID1 tube driver | 4 |
+| K155ID1 tube driver | 4 | [store](https://tubes-store.com/product_info.php?products_id=46) |
 | 74HC595 shift register | 2 |
 | 100nF capacitor | 4 | IC power filtering |
 | MPSA42 transistor | 1 | INS-1 control |
@@ -67,21 +85,61 @@ The clock automatically shuts down after 15s.
 | 100µF capacitor | 1 | power filtering |
 | IC terminal block | 1 |
 | 2x4 2.54mm male connector | 1 | Buttons |
-| 1x3 2.54mm male connector | 1 | NeoPixels strip |
+| 1x3 2.54mm male connector | 1 | External NeoPixels |
 
-### For "air case"
+
+## "Air" case
+
+This a simple stand which leaves the circuit exposed. It has no LEDs button.
+
+### Parts list
 | part | qty. | notes |
 |--|--|--|
+| SMD WS2812 LEDs | 4 | NeoPixels |
 | Micro-USB breakout board | 1 |
 | 5mm push button | 2 |
 | 12mm push button | 1 |
+| M3 screw + nut + washer | 4 |
 | Dupont cables | |
-| hv-cover | 1 | 3d printed |
-| indic-holder | 1 | 3d printed |
-| leg-left | 1 | 3d printed |
-| leg-right | 1 | 3d printed |
-| plate-left | 1 | 3d printed |
-| plate-right | 1 | 3d printed |
+
+### 3D printed parts
+| part | qty. | notes |
+|--|--|--|
+| air-case/leg-left | 1 |
+| air-case/leg-right | 1 |
+| air-case/plate-left | 1 |
+| air-case/plate-right | 1 |
+| air-case/hv-cover | 1 |
+| air-case/indic-holder | 1 |
+
+
+## Desk case
+
+This is a fully closed case. The tubes sockets are not soldered to the board but integrated in the structure and connected with a lot of wires.
+
+### Parts list
+| part | qty. | notes |
+|--|--|--|
+| ADA1938 LEDs | 4 | NeoPixels |
+| 5.5mm DC jack | 1 |
+| 5mm push button | 3 |
+| 12mm push button | 1 |
+| 1x3 2.54mm male+female connector | 2 | remove the central pin, used to make the INS-1 connector |
+| M3 screw + nut + washer | 8 |
+| M3 screw + insert | 2 |
+| lot of wires | |
+
+### 3D printed parts
+| part | qty. | notes |
+|--|--|--|
+| full-case/box | 1 |
+| full-case/beams | 1 |
+| full-case/back-panel | 1 |
+| full-case/front-panel | 1 |
+| full-case/tubes-support | 1 |
+| full-case/back-buttons-holder | 1 |
+| full-case/top-button | 1 |
+| full-case/top-button-holder | 1 |
 
 
 ## License

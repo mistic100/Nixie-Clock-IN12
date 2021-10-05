@@ -4,8 +4,19 @@
 #include <Wire.h>
 #include "Button.h"
 
-#define LEDS_NUM 7
-#define AUTO_OFF_DELAY 15000
+// automatic shutdown after X milliseconds, comment to disable
+#define AUTO_OFF_DELAY 30000
+
+// invert the digits (used for the full-case)
+//#define INVERT
+
+// number of NeoPixels
+#define LEDS_NUM 4
+
+// color order of NeoPixels
+#define LEDS_TYPE GRB
+
+// end of configuration
 
 const byte SR_PINS[][4] = {
   { 7, 5, 4, 6 },
@@ -49,8 +60,10 @@ uint8_t ledsPaletteIndex = 0;
 bool ledsBrightnessDir = false;
 
 bool isOn = true;
+#ifdef AUTO_OFF_DELAY
 bool alwaysOn = false;
 unsigned long onTime = millis();
+#endif
 
 void setup() {
   pinMode(DOTS_PIN, OUTPUT);
@@ -60,14 +73,16 @@ void setup() {
 
   Serial.begin(9600);
 
-  FastLED.addLeds<WS2812, LEDS_PIN, GRB>(leds, LEDS_NUM);
+  FastLED.addLeds<WS2812, LEDS_PIN, LEDS_TYPE>(leds, LEDS_NUM);
   FastLED.setCorrection(TypicalLEDStrip);
 
   Wire.begin();
   Clock.setClockMode(false);
 
   button1.onSinglePress(onOff);
+  #ifdef AUTO_OFF_DELAY
   button1.onDoublePress(changeAlwaysOn);
+  #endif
 
   button2.onSinglePress(incHour);
   button2.onSustain(incHours);
@@ -80,7 +95,7 @@ void setup() {
 }
 
 void loop() {
-  EVERY_N_MILLIS(10) {
+  EVERY_N_MILLIS(50) {
     button1.handle();
     button2.handle();
     button3.handle();
@@ -94,7 +109,7 @@ void loop() {
   }
 
   EVERY_N_MILLIS(1000) {
-    #if AUTO_OFF_DELAY > 0
+    #ifdef AUTO_OFF_DELAY
     if (!updatingTime && !alwaysOn && millis() - onTime > AUTO_OFF_DELAY) {
       off();
     }
@@ -120,7 +135,9 @@ void on() {
     isOn = true;
     showTime();
   }
+  #ifdef AUTO_OFF_DELAY
   onTime = millis();
+  #endif
 }
 
 /**
@@ -152,12 +169,12 @@ void onOff() {
 /**
  * Switch between always on and auto off
  */
+#ifdef AUTO_OFF_DELAY
 void changeAlwaysOn() {
-  #if AUTO_OFF_DELAY > 0
   alwaysOn = !alwaysOn;
   on();
-  #endif
 }
+#endif
 
 /**
  * Enable the dots
@@ -214,6 +231,9 @@ void writeValue(uint8_t digit1, uint8_t digit2, uint8_t digit3, uint8_t digit4) 
  * Write the value of a digit
  */
 void writeDigit(byte digit, uint8_t value) {
+  #ifdef INVERT
+  digit = 3 - digit;
+  #endif
   sr.setNoUpdate(SR_PINS[digit][0], value & 0x01);
   sr.setNoUpdate(SR_PINS[digit][1], (value & 0x02) >> 1);
   sr.setNoUpdate(SR_PINS[digit][2], (value & 0x04) >> 2);
@@ -318,8 +338,7 @@ void incMinute() {
  */
 void showPalette(uint8_t scale = 255) {
   for (uint8_t i = 0; i < LEDS_NUM; i++) {
-    // 240 is 16x15, hi-bit is 15, low-bit is 0, this prevents ColorFromPalette to perform blending with the first color
-    uint8_t index = min(1.0 * scale * i / (LEDS_NUM - 1), 240);
+    uint8_t index = 1.0 * scale * i / (LEDS_NUM - 1);
     leds[i] = ColorFromPalette(ledsPalette, index + ledsPaletteIndex);
   }
 }
@@ -331,7 +350,7 @@ void ledsRun() {
   switch (ledsMode) {
     case M_RAINBOW:
       ledsPaletteIndex += 1;
-      showPalette();
+      showPalette(64);
       break;
 
     case M_RAINBOW_2:
