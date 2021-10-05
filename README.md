@@ -8,6 +8,8 @@ It has a NeoPixels port and locations for SMD WS2812 LEDs (not tested because I 
 
 ![](https://galerie.strangeplanet.fr/_data/i/upload/2021/09/05/20210905122303-39b00a0b-me.jpg)
 
+![](https://galerie.strangeplanet.fr/_data/i/upload/2021/10/05/20211005212903-25f66541-me.jpg)
+
 [Pictures on my website](https://galerie.strangeplanet.fr/index.php?/category/219)
 
 
