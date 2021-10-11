@@ -4,8 +4,8 @@
 #include <Wire.h>
 #include "Button.h"
 
-// automatic shutdown after X milliseconds, comment to disable
-#define AUTO_OFF_DELAY 30000
+// automatic shutdown after X seconds, comment to disable
+#define AUTO_OFF_DELAY 30
 
 // invert the digits (used for the full-case)
 //#define INVERT
@@ -16,8 +16,12 @@
 // color order of NeoPixels
 #define LEDS_TYPE GRB
 
-// end of configuration
+// automatically run anti cathode poisonning after X seconds
+#define ANTI_POISONING_DELAY 1200
 
+// END OF CONFIGURATION
+
+// pins and devices
 const byte SR_PINS[][4] = {
   { 7, 5, 4, 6 },
   { 3, 1, 0, 2 },
@@ -59,7 +63,11 @@ CRGBPalette16 ledsPalette = RainbowColors_p;
 uint8_t ledsPaletteIndex = 0;
 bool ledsBrightnessDir = false;
 
+// state
 bool isOn = true;
+#ifdef ANTI_POISONING_DELAY
+unsigned antiPoisoningTime =0;
+#endif
 #ifdef AUTO_OFF_DELAY
 bool alwaysOn = false;
 unsigned long onTime = millis();
@@ -92,6 +100,13 @@ void setup() {
   
   button4.onSinglePress(ledsNextMode);
   button4.onSustain(ledsChangeBrightness);
+
+  #ifdef ANTI_POISONING_DELAY
+  oneArmedBandit();
+  #endif
+
+  getTime();
+  showTime();
 }
 
 void loop() {
@@ -110,7 +125,7 @@ void loop() {
 
   EVERY_N_MILLIS(1000) {
     #ifdef AUTO_OFF_DELAY
-    if (!updatingTime && !alwaysOn && millis() - onTime > AUTO_OFF_DELAY) {
+    if (!updatingTime && !alwaysOn && millis() - onTime > AUTO_OFF_DELAY * 1000) {
       off();
     }
     #endif
@@ -122,8 +137,17 @@ void loop() {
     if (!updatingTime && isOn) {
       showTime();
       dotsOnOff();
+
+      #ifdef ANTI_POISONING_DELAY
+      antiPoisoningTime++;
+      if (antiPoisoningTime >= ANTI_POISONING_DELAY) {
+        oneArmedBandit();
+        antiPoisoningTime = 0;
+      }
+      #endif
     }
   }
+
 }
 
 /**
@@ -323,15 +347,45 @@ void incMinutes(bool last, unsigned long ellapsed) {
  * Increase the hours
  */
 void incHour() {
-  incHours(true, 0);
+  on();
+
+  Hour++;
+  if (Hour == 24) {
+    Hour = 0;
+  }
+
+  saveTime();
 }
 
 /** 
  * Increase the minutes
  */
 void incMinute() {
-  incMinutes(true, 0);
+  on();
+
+  Minute++;
+  if (Minute == 60) {
+    Minute = 0;
+    Hour++;
+    if (Hour == 24) {
+      Hour = 0;
+    }
+  }
+
+  saveTime();
 }
+
+/**
+ * Cycle through all digits
+ */
+#ifdef ANTI_POISONING_DELAY
+void oneArmedBandit() {
+  for (uint8_t i = 0; i < 100; i++) {
+    writeValue(i%10, i%10, i%10, i%10);
+    delay(10);
+  }
+}
+#endif
 
 /**
  * Display the current leds palette
