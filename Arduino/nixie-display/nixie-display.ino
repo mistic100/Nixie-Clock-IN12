@@ -2,6 +2,7 @@
 #include <FastLED.h>
 #include <DS3231.h>
 #include <Wire.h>
+#include <FlashStorage_SAMD.h>
 #include "Button.h"
 
 // automatic shutdown after X seconds, comment to disable
@@ -39,14 +40,11 @@ Button button2(9);
 Button button3(8);
 Button button4(7);
 
-enum LedsModes {
-  M_RAINBOW,
-  M_RAINBOW_2,
-  M_BLUE,
-  M_GREEN,
-  M_RED,
-  NUM_MODES
-};
+// eeprom configuration
+#define EEPROM_ALWAYS_ON 0
+#define EEPROM_COLOR 1
+#define EEPROM_BRIGHTNESS 2
+const int EEPROM_SIGNATURE = 0xBEEFDEED;
 
 // time
 DS3231 Clock;
@@ -56,6 +54,18 @@ bool Dots = false;
 bool updatingTime = false;
 
 // leds
+enum LedsModes {
+  M_RAINBOW,
+  M_RAINBOW_2,
+  M_BLUE,
+  M_CYAN,
+  M_GREEN,
+  M_ORANGE,
+  M_RED,
+  M_PURPLE,
+  NUM_MODES
+};
+
 CRGB leds[LEDS_NUM];
 enum LedsModes ledsMode = M_RAINBOW;
 uint8_t ledsBrightness = 255;
@@ -65,6 +75,7 @@ bool ledsBrightnessDir = false;
 
 // state
 bool isOn = true;
+bool needSave = false;
 #ifdef ANTI_POISONING_DELAY
 unsigned antiPoisoningTime =0;
 #endif
@@ -78,6 +89,16 @@ void setup() {
   
   sr.setAllLow();
   dotsOn();
+
+  int signature;
+  EEPROM.get(0, signature);
+  if (signature == EEPROM_SIGNATURE) {
+    #ifdef AUTO_OFF_DELAY
+    alwaysOn = EEPROM.read(sizeof(EEPROM_SIGNATURE) + EEPROM_ALWAYS_ON) == 1;
+    #endif
+    ledsMode = LedsModes(EEPROM.read(sizeof(EEPROM_SIGNATURE) +EEPROM_COLOR) % NUM_MODES);
+    ledsBrightness = EEPROM.read(sizeof(EEPROM_SIGNATURE) + EEPROM_BRIGHTNESS);
+  }
 
   Serial.begin(9600);
 
@@ -148,6 +169,12 @@ void loop() {
     }
   }
 
+  EVERY_N_MILLIS(10000) {
+    if (needSave) {
+      saveSettings();
+      needSave = false;
+    }
+  }
 }
 
 /**
@@ -197,6 +224,7 @@ void onOff() {
 void changeAlwaysOn() {
   alwaysOn = !alwaysOn;
   on();
+  needSave = true;
 }
 #endif
 
@@ -415,11 +443,20 @@ void ledsRun() {
     case M_BLUE:
       fill_solid(leds, LEDS_NUM, CRGB::Blue);
       break;
+    case M_CYAN:
+      fill_solid(leds, LEDS_NUM, CRGB::Cyan);
+      break;
     case M_GREEN:
       fill_solid(leds, LEDS_NUM, CRGB::Green);
       break;
+    case M_ORANGE:
+      fill_solid(leds, LEDS_NUM, CRGB::OrangeRed);
+      break;
     case M_RED:
       fill_solid(leds, LEDS_NUM, CRGB::Red);
+      break;
+    case M_PURPLE:
+      fill_solid(leds, LEDS_NUM, CRGB::Purple);
       break;
   }
 }
@@ -432,13 +469,7 @@ void ledsNextMode() {
   
   ledsMode = LedsModes((ledsMode + 1) % NUM_MODES);
   ledsPaletteIndex = 0;
-
-  switch (ledsMode) {
-    case M_RAINBOW:
-    case M_RAINBOW_2:
-      ledsPalette = RainbowColors_p;
-      break;
-  }
+  needSave = true;
 }
 
 /**
@@ -454,5 +485,19 @@ void ledsChangeBrightness(bool last, unsigned long) {
   }
   if (last) {
     ledsBrightnessDir = !ledsBrightnessDir;
+    needSave = true;
   }
+}
+
+/**
+ * Store settings
+ */
+void saveSettings() {
+  EEPROM.put(0, EEPROM_SIGNATURE);
+  #ifdef AUTO_OFF_DELAY
+  EEPROM.put(sizeof(EEPROM_SIGNATURE) + EEPROM_ALWAYS_ON, alwaysOn ? 1 : 0);
+  #endif
+  EEPROM.put(sizeof(EEPROM_SIGNATURE) + EEPROM_COLOR, ledsMode);
+  EEPROM.put(sizeof(EEPROM_SIGNATURE) + EEPROM_BRIGHTNESS, ledsBrightness);
+  EEPROM.commit();
 }

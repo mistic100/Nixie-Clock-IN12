@@ -40,6 +40,7 @@ The clock automatically shuts down after 15s.
 - ShiftRegister74HC595
 - FastLED
 - DS3231
+- FlashStorage_SAMD
 
 ### Configuration
 
