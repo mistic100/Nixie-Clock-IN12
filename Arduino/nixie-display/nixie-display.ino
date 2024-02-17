@@ -8,8 +8,11 @@
 // automatic shutdown after X seconds, comment to disable
 #define AUTO_OFF_DELAY 30
 
-// invert the digits (used for the full-case)
+// invert the digits (used for the full-case), comment to disable
 //#define INVERT
+
+// enable seconds, comment to disable
+//#define SIX_DIGITS
 
 // number of NeoPixels
 #define LEDS_NUM 4
@@ -17,23 +20,36 @@
 // color order of NeoPixels
 #define LEDS_TYPE GRB
 
-// automatically run anti cathode poisonning after X seconds
+// automatically run anti cathode poisonning after X seconds, comment to disable
 #define ANTI_POISONING_DELAY 1200
 
 // END OF CONFIGURATION
 
-// pins and devices
+// pins
+#define DOTS_PIN 0
+#define LEDS_PIN 6
+
+#define SR_DS_PIN 3
+#define SR_SHCP_PIN 2
+#define SR_STCP_PIN 1
+
 const byte SR_PINS[][4] = {
   { 7, 5, 4, 6 },
   { 3, 1, 0, 2 },
   { 7+8, 5+8, 4+8, 6+8 },
-  { 3+8, 1+8, 0+8, 2+8 }
+  { 3+8, 1+8, 0+8, 2+8 },
+  { 7+16, 5+8, 4+8, 6+8 },
+  { 3+16, 1+16, 0+16, 2+16 }
 };
 
-#define DOTS_PIN 0
-#define LEDS_PIN 6
+#ifdef SIX_DIGITS
+#define SR_SIZE 3
+#else
+#define SR_SIZE 2
+#endif
 
-ShiftRegister74HC595<2> sr(3, 2, 1);
+// devices
+ShiftRegister74HC595<SR_SIZE> sr(SR_DS_PIN, SR_SHCP_PIN, SR_STCP_PIN);
 
 Button button1(10);
 Button button2(9);
@@ -50,6 +66,7 @@ const int EEPROM_SIGNATURE = 0xBEEFDEED;
 DS3231 Clock;
 byte Hour = 0;
 byte Minute = 0;
+byte Second = 0;
 bool Dots = false;
 bool updatingTime = false;
 
@@ -262,20 +279,34 @@ void dotsOnOff() {
 /**
  * Write values to all four digits
  */
-void writeValue(uint8_t digit1, uint8_t digit2, uint8_t digit3, uint8_t digit4) {
+void writeValue(
+    uint8_t digit1, 
+    uint8_t digit2, 
+    uint8_t digit3, 
+    uint8_t digit4, 
+    uint8_t digit5, 
+    uint8_t digit6
+) {
   Serial.print(F("Write "));
   Serial.print(digit1);
-  Serial.print(F(" "));
   Serial.print(digit2);
-  Serial.print(F(" "));
+  Serial.print(F(":"));
   Serial.print(digit3);
-  Serial.print(F(" "));
   Serial.print(digit4);
+  #ifdef SIX_DIGITS
+  Serial.print(F(":"));
+  Serial.print(digit5);
+  Serial.print(digit6);
+  #endif
   Serial.println();
   writeDigit(0, digit1);
   writeDigit(1, digit2);
   writeDigit(2, digit3);
   writeDigit(3, digit4);
+  #ifdef SIX_DIGITS
+  writeDigit(4, digit5);
+  writeDigit(5, digit6);
+  #endif
   sr.updateRegisters();
 }
 
@@ -284,7 +315,11 @@ void writeValue(uint8_t digit1, uint8_t digit2, uint8_t digit3, uint8_t digit4) 
  */
 void writeDigit(byte digit, uint8_t value) {
   #ifdef INVERT
-  digit = 3 - digit;
+    #ifdef SIX_DIGITS
+    digit = 5 - digit;
+    #else
+    digit = 3 - digit;
+    #endif
   #endif
   sr.setNoUpdate(SR_PINS[digit][0], value & 0x01);
   sr.setNoUpdate(SR_PINS[digit][1], (value & 0x02) >> 1);
@@ -300,7 +335,9 @@ void showTime() {
     (Hour / 10) % 10,
     Hour % 10, 
     (Minute / 10) % 10,
-    Minute % 10
+    Minute % 10, 
+    (Second / 10) % 10,
+    Second % 10
   );
 }
 
@@ -311,6 +348,7 @@ void getTime() {
   static bool h12, pmtime;
   Hour = Clock.getHour(h12, pmtime);
   Minute = Clock.getMinute();
+  Second = Clock.getSecond();
 }
 
 /**
@@ -409,7 +447,7 @@ void incMinute() {
 #ifdef ANTI_POISONING_DELAY
 void oneArmedBandit() {
   for (uint8_t i = 0; i < 100; i++) {
-    writeValue(i%10, i%10, i%10, i%10);
+    writeValue(i%10, i%10, i%10, i%10, i%10, i%10);
     delay(10);
   }
 }

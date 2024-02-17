@@ -46,6 +46,7 @@ The clock automatically shuts down after 15s.
 
 - `AUTO_OFF_DELAY` automatic shutdown after X milliseconds, comment to disable
 - `INVERT` invert the digits (used for the full-case)
+- `SIX_DIGITS` enable seconds (requires extension board)
 - `LEDS_NUM` number of NeoPixels
 - `LEDS_TYPE` color order of NeoPixels
 
@@ -143,6 +144,18 @@ This is a fully closed case. The tubes sockets are not soldered to the board but
 | full-case/back-buttons-holder | 1 |
 | full-case/top-button | 1 |
 | full-case/top-button-holder | 1 |
+
+
+## Extension board
+
+There is a "nixie-display_extension.fzz" PCB design which allows to add two additional tubes. It will require to "hack" into the main board to get the necessary data lines.
+
+- LED : output of the last Neopixel
+- DS : output (Q7') of the last shift register
+- STCP : any of the STCP pins of the shift registers, or pin D1 of the Xiao
+- SHCP : any of the SHCP pins of the shift registers, or pin D2 of the Xiao
+- 5V/GND : from the main terminal
+- 170V : output of the NCH8200HV
 
 
 ## License
