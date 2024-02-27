@@ -44,7 +44,8 @@ The clock automatically shuts down after 15s.
 
 ### Configuration
 
-- `AUTO_OFF_DELAY` automatic shutdown after X milliseconds, comment to disable
+- `AUTO_OFF_DELAY` automatic shutdown after X seconds
+- `ALWAYS_ON_TIME` define at which time the display stays on
 - `INVERT` invert the digits (used for the full-case)
 - `SIX_DIGITS` enable seconds (requires extension board)
 - `LEDS_NUM` number of NeoPixels
