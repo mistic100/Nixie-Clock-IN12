@@ -7,7 +7,7 @@
 #include "Button.h"
 
 // automatic shutdown after X seconds
-#define AUTO_OFF_DELAY 30
+#define AUTO_OFF_DELAY 10 * 60
 
 // define at which time the display stays on
 const byte ALWAYS_ON_TIME[][3] = {
@@ -16,20 +16,23 @@ const byte ALWAYS_ON_TIME[][3] = {
     {false, 23, 30},
 };
 
-// invert the digits (used for the full-case), comment to disable
+// invert the digits order, comment to disable
 // #define INVERT
 
 // enable seconds, comment to disable
-#define SIX_DIGITS
+// #define SIX_DIGITS
 
 // number of NeoPixels
 #define LEDS_NUM 4
 
 // color order of NeoPixels
-#define LEDS_TYPE GRB
+#define LEDS_ORDER GRB
+
+// chipset of NeoPixels
+#define LEDS_TYPE WS2812
 
 // automatically run anti cathode poisonning after X seconds, comment to disable
-#define ANTI_POISONING_DELAY 1200
+#define ANTI_POISONING_DELAY 20 * 60
 
 // END OF CONFIGURATION
 
@@ -58,7 +61,7 @@ const byte SR_PINS[][4] = {
 // devices
 ShiftRegister74HC595<SR_SIZE> sr(SR_DS_PIN, SR_SHCP_PIN, SR_STCP_PIN);
 
-Button button1(10, true);
+Button button1(10);
 Button button2(9);
 Button button3(8);
 Button button4(7);
@@ -88,6 +91,7 @@ enum LedsModes
   M_ORANGE,
   M_RED,
   M_PURPLE,
+  M_WHITE,
   NUM_MODES
 };
 
@@ -100,11 +104,12 @@ bool ledsBrightnessDir = false;
 
 // state
 bool isOn = true;
-bool needSave = false;
-bool alwaysOn = false;
-unsigned long onTime = millis();
+bool needSaveSettings = false;
+bool needSaveTime = false;
+bool alwaysOn = true;
+unsigned long onTime = 0;
 #ifdef ANTI_POISONING_DELAY
-unsigned antiPoisoningTime = 0;
+unsigned long antiPoisoningTime = 0;
 #endif
 
 void on();
@@ -117,11 +122,14 @@ bool isAlwaysOn();
 void changeAlwaysOn();
 void saveSettings();
 void saveTime();
+void incTime();
 void getTime();
 void showTime();
 void oneArmedBandit();
+void incSecond();
 void incMinute();
 void incHour();
+void incSeconds(bool last, unsigned long ellapsed);
 void incMinutes(bool last, unsigned long ellapsed);
 void incHours(bool last, unsigned long ellapsed);
 void ledsChangeBrightness(bool last, unsigned long);
@@ -135,7 +143,6 @@ void setup()
   dotsOn();
 
   Serial.begin(9600);
-  Serial.println("Setup");
 
   int signature;
   EEPROM.get(0, signature);
@@ -146,20 +153,15 @@ void setup()
     ledsBrightness = EEPROM.read(sizeof(EEPROM_SIGNATURE) + EEPROM_BRIGHTNESS);
   }
 
-  Serial.println("EEPROM ok");
-
-  FastLED.addLeds<WS2812, LEDS_PIN, LEDS_TYPE>(leds, LEDS_NUM);
-  FastLED.setCorrection(TypicalLEDStrip);
-
-  Serial.println("LED ok");
+  FastLED.addLeds<LEDS_TYPE, LEDS_PIN, LEDS_ORDER>(leds, LEDS_NUM);
+  FastLED.setCorrection(UncorrectedColor);
+  FastLED.setBrightness(ledsBrightness);
 
   Wire.begin();
   Clock.setClockMode(false);
 
-  Serial.println("Clock ok");
-
   button1.onSinglePress(onOff);
-  button1.onDoublePress(changeAlwaysOn);
+  button1.onLongPress(changeAlwaysOn);
 
   button2.onSinglePress(incHour);
   button2.onSustain(incHours);
@@ -170,41 +172,25 @@ void setup()
   button4.onSinglePress(ledsNextMode);
   button4.onSustain(ledsChangeBrightness);
 
-  Serial.println("Buttons ok");
-
-#ifdef ANTI_POISONING_DELAY
-  oneArmedBandit();
-#endif
-
   getTime();
   Serial.print("Time at init: ");
   printTime();
 
-  showTime();
+  on();
 }
 
 void loop()
 {
-  EVERY_N_MILLIS(50)
-  {
-    button1.handle();
-    button2.handle();
-    button3.handle();
-    button4.handle();
+  button1.handle();
+  button2.handle();
+  button3.handle();
+  button4.handle();
 
-    if (isOn)
-    {
-      ledsRun();
-      FastLED.setBrightness(ledsBrightness);
-      FastLED.show();
-    }
-  }
-
-  EVERY_N_MILLIS(1000)
+  EVERY_N_SECONDS(1)
   {
     if (!updatingTime)
     {
-      getTime();
+      incTime();
 
       if (!isAlwaysOn() && millis() - onTime > AUTO_OFF_DELAY * 1000)
       {
@@ -217,24 +203,47 @@ void loop()
         dotsOnOff();
 
 #ifdef ANTI_POISONING_DELAY
-        antiPoisoningTime++;
-        if (antiPoisoningTime >= ANTI_POISONING_DELAY)
+        if (millis() - antiPoisoningTime > ANTI_POISONING_DELAY * 1000)
         {
           oneArmedBandit();
-          antiPoisoningTime = 0;
         }
 #endif
       }
     }
   }
 
-  EVERY_N_MILLIS(10000)
+  EVERY_N_SECONDS(10)
   {
-    if (needSave)
+    if (needSaveSettings)
     {
       saveSettings();
-      needSave = false;
     }
+    if (needSaveTime && !updatingTime)
+    {
+      saveTime();
+    }
+  }
+
+  EVERY_N_MINUTES(10)
+  {
+    if (!updatingTime && !needSaveTime)
+    {
+      getTime();
+    }
+  }
+
+  EVERY_N_MILLIS(50)
+  {
+    if (isOn)
+    {
+      ledsRun();
+      FastLED.setBrightness(ledsBrightness);
+    }
+  }
+
+  if (isOn)
+  {
+    FastLED.show();
   }
 }
 
@@ -289,9 +298,10 @@ void onOff()
  */
 void changeAlwaysOn()
 {
-  alwaysOn = !alwaysOn;
   on();
-  needSave = true;
+
+  alwaysOn = !alwaysOn;
+  needSaveSettings = true;
 
   Serial.print("Always ON: ");
   Serial.println(alwaysOn ? "yes" : "no");
@@ -407,6 +417,7 @@ void writeValue(
   Serial.print(digit6);
 #endif
   Serial.println();
+
   writeDigit(0, digit1);
   writeDigit(1, digit2);
   writeDigit(2, digit3);
@@ -415,6 +426,7 @@ void writeValue(
   writeDigit(4, digit5);
   writeDigit(5, digit6);
 #endif
+
   sr.updateRegisters();
 }
 
@@ -430,6 +442,31 @@ void showTime()
       Minute % 10,
       (Second / 10) % 10,
       Second % 10);
+}
+
+/**
+ * Increment local time by 1 second
+ */
+void incTime()
+{
+  Second++;
+  if (Second == 60)
+  {
+    Second = 0;
+    if (!updatingTime)
+    {
+      Minute++;
+      if (Minute == 60)
+      {
+        Minute = 0;
+        Hour++;
+        if (Hour == 24)
+        {
+          Hour = 0;
+        }
+      }
+    }
+  }
 }
 
 /**
@@ -450,15 +487,18 @@ void saveTime()
 {
   Clock.setHour(Hour);
   Clock.setMinute(Minute);
+  Clock.setSecond(Second);
 
   Serial.print("Update time: ");
   printTime();
+
+  needSaveTime = false;
 }
 
 /**
  * Increase the hours
  */
-void incHours(bool last, unsigned long ellapsed)
+void incHours(bool last, unsigned long)
 {
   on();
   dotsOff();
@@ -466,7 +506,6 @@ void incHours(bool last, unsigned long ellapsed)
 
   EVERY_N_MILLIS_I(timer, 500)
   {
-    timer.setPeriod(ellapsed < 2000 ? 500 : 100);
     Hour++;
     if (Hour == 24)
     {
@@ -477,7 +516,7 @@ void incHours(bool last, unsigned long ellapsed)
 
   if (last)
   {
-    saveTime();
+    needSaveTime = true;
     updatingTime = false;
   }
 }
@@ -498,18 +537,44 @@ void incMinutes(bool last, unsigned long ellapsed)
     if (Minute == 60)
     {
       Minute = 0;
-      Hour++;
-      if (Hour == 24)
-      {
-        Hour = 0;
-      }
     }
     showTime();
   }
 
   if (last)
   {
-    saveTime();
+    timer.setPeriod(500);
+
+    needSaveTime = true;
+    updatingTime = false;
+  }
+}
+
+/**
+ * Increase the seconds
+ */
+void incSeconds(bool last, unsigned long ellapsed)
+{
+  on();
+  dotsOff();
+  updatingTime = true;
+
+  EVERY_N_MILLIS_I(timer, 500)
+  {
+    timer.setPeriod(ellapsed < 2000 ? 500 : 100);
+    Second++;
+    if (Second == 60)
+    {
+      Second = 0;
+    }
+    showTime();
+  }
+
+  if (last)
+  {
+    timer.setPeriod(500);
+
+    needSaveTime = true;
     updatingTime = false;
   }
 }
@@ -526,8 +591,9 @@ void incHour()
   {
     Hour = 0;
   }
+  showTime();
 
-  saveTime();
+  needSaveTime = true;
 }
 
 /**
@@ -541,14 +607,27 @@ void incMinute()
   if (Minute == 60)
   {
     Minute = 0;
-    Hour++;
-    if (Hour == 24)
-    {
-      Hour = 0;
-    }
   }
+  showTime();
 
-  saveTime();
+  needSaveTime = true;
+}
+
+/**
+ * Increase the seconds
+ */
+void incSecond()
+{
+  on();
+
+  Second++;
+  if (Second == 60)
+  {
+    Second = 0;
+  }
+  showTime();
+
+  needSaveTime = true;
 }
 
 /**
@@ -564,6 +643,10 @@ void oneArmedBandit()
     writeValue(i % 10, i % 10, i % 10, i % 10, i % 10, i % 10);
     delay(10);
   }
+
+  antiPoisoningTime = millis();
+
+  showTime();
 }
 #endif
 
@@ -614,6 +697,9 @@ void ledsRun()
   case M_PURPLE:
     fill_solid(leds, LEDS_NUM, CRGB::Purple);
     break;
+  case M_WHITE:
+    fill_solid(leds, LEDS_NUM, CRGB::White);
+    break;
   }
 }
 
@@ -626,7 +712,7 @@ void ledsNextMode()
 
   ledsMode = LedsModes((ledsMode + 1) % NUM_MODES);
   ledsPaletteIndex = 0;
-  needSave = true;
+  needSaveSettings = true;
 
   Serial.print("LED mode: ");
   Serial.println(ledsMode);
@@ -647,10 +733,12 @@ void ledsChangeBrightness(bool last, unsigned long)
   {
     ledsBrightness = qsub8(ledsBrightness, 16);
   }
+  FastLED.setBrightness(ledsBrightness);
+
   if (last)
   {
     ledsBrightnessDir = !ledsBrightnessDir;
-    needSave = true;
+    needSaveSettings = true;
 
     Serial.print("LED brightness: ");
     Serial.println(ledsBrightness);
@@ -667,6 +755,10 @@ void saveSettings()
   EEPROM.put(sizeof(EEPROM_SIGNATURE) + EEPROM_COLOR, ledsMode);
   EEPROM.put(sizeof(EEPROM_SIGNATURE) + EEPROM_BRIGHTNESS, ledsBrightness);
   EEPROM.commit();
+
+  Serial.println("Save settings");
+
+  needSaveSettings = false;
 }
 
 /**

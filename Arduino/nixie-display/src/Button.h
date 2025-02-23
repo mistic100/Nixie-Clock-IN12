@@ -14,7 +14,6 @@ class Button {
   
 private:
   uint8_t pin;
-  bool analog;
 
   unsigned long pressTime = 0;
   uint8_t state = BTN_IDLE;
@@ -27,12 +26,9 @@ private:
   void (*user_onSustain)(bool last, unsigned long ellapsed);
 
 public:
-  Button(uint8_t _pin, bool _analog = false) {
+  Button(uint8_t _pin) {
     pin = _pin;
-    analog = _analog;
-    if (!analog) {
-      pinMode(pin, INPUT_PULLUP);
-    }
+    pinMode(pin, INPUT_PULLUP);
   }
 
   void onSinglePress(void (*function)(void)) {
@@ -52,12 +48,7 @@ public:
   }
 
   void handle() {
-    bool pressed;
-    if (analog) {
-      pressed = analogRead(pin) <= BUTTON_ANALOG_THRESHOLD;
-    } else {
-      pressed = digitalRead(pin) == LOW;
-    }
+    bool pressed = digitalRead(pin) == LOW;
 
     if (pressed) {
       switch (state) {

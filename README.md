@@ -20,7 +20,7 @@ It has a NeoPixels port and locations for SMD WS2812 LEDs (not tested because I 
 The clock automatically shuts down after 15s.
 
 - Short press : on/off
-- Double press : switch to always on mode
+- Long press : switch always on mode
 
 ### Set time (buttons 2 & 3)
 
@@ -49,7 +49,8 @@ The clock automatically shuts down after 15s.
 - `INVERT` invert the digits (used for the full-case)
 - `SIX_DIGITS` enable seconds (requires extension board)
 - `LEDS_NUM` number of NeoPixels
-- `LEDS_TYPE` color order of NeoPixels
+- `LEDS_ORDER` color order of NeoPixels
+- `LEDS_TYPE` chipset of NeoPixels
 
 
 ## Parts list
