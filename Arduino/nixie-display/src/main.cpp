@@ -6,15 +6,17 @@
 #include <FlashStorage_SAMD.h>
 #include "Button.h"
 
-// automatic shutdown after X seconds
+// automatic shutdown after X seconds, comment to disable
 #define AUTO_OFF_DELAY 10 * 60
 
+#ifdef AUTO_OFF_DELAY
 // define at which time the display stays on
 const byte ALWAYS_ON_TIME[][3] = {
     {false, 0, 0}, // the first line must be 0:0
     {true, 9, 30},
     {false, 23, 30},
 };
+#endif
 
 // invert the digits order, comment to disable
 // #define INVERT
@@ -106,7 +108,9 @@ bool ledsBrightnessDir = false;
 bool isOn = true;
 bool needSaveSettings = false;
 bool needSaveTime = false;
+#ifdef AUTO_OFF_DELAY
 bool alwaysOn = true;
+#endif
 unsigned long onTime = 0;
 #ifdef ANTI_POISONING_DELAY
 unsigned long antiPoisoningTime = 0;
@@ -118,8 +122,10 @@ void onOff();
 void dotsOn();
 void dotsOff();
 void dotsOnOff();
+#ifdef AUTO_OFF_DELAY
 bool isAlwaysOn();
 void changeAlwaysOn();
+#endif
 void saveSettings();
 void saveTime();
 void incTime();
@@ -148,7 +154,9 @@ void setup()
   EEPROM.get(0, signature);
   if (signature == EEPROM_SIGNATURE)
   {
+    #ifdef AUTO_OFF_DELAY
     alwaysOn = EEPROM.read(sizeof(EEPROM_SIGNATURE) + EEPROM_ALWAYS_ON) == 1;
+    #endif
     ledsMode = LedsModes(EEPROM.read(sizeof(EEPROM_SIGNATURE) + EEPROM_COLOR) % NUM_MODES);
     ledsBrightness = EEPROM.read(sizeof(EEPROM_SIGNATURE) + EEPROM_BRIGHTNESS);
   }
@@ -161,7 +169,9 @@ void setup()
   Clock.setClockMode(false);
 
   button1.onSinglePress(onOff);
+  #ifdef AUTO_OFF_DELAY
   button1.onLongPress(changeAlwaysOn);
+  #endif
 
   button2.onSinglePress(incHour);
   button2.onSustain(incHours);
@@ -192,10 +202,12 @@ void loop()
     {
       incTime();
 
+      #ifdef AUTO_OFF_DELAY
       if (!isAlwaysOn() && millis() - onTime > AUTO_OFF_DELAY * 1000)
       {
         off();
       }
+      #endif
 
       if (isOn)
       {
@@ -293,6 +305,7 @@ void onOff()
   }
 }
 
+#ifdef AUTO_OFF_DELAY
 /**
  * Switch between always on and auto off
  */
@@ -334,6 +347,7 @@ bool isAlwaysOn()
 
   return res;
 }
+#endif
 
 /**
  * Enable the dots
@@ -436,12 +450,13 @@ void writeValue(
 void showTime()
 {
   writeValue(
-      (Hour / 10) % 10,
-      Hour % 10,
-      (Minute / 10) % 10,
-      Minute % 10,
-      (Second / 10) % 10,
-      Second % 10);
+    (Hour / 10) % 10,
+    Hour % 10,
+    (Minute / 10) % 10,
+    Minute % 10,
+    (Second / 10) % 10,
+    Second % 10
+  );
 }
 
 /**
@@ -751,7 +766,9 @@ void ledsChangeBrightness(bool last, unsigned long)
 void saveSettings()
 {
   EEPROM.put(0, EEPROM_SIGNATURE);
+  #ifdef AUTO_OFF_DELAY
   EEPROM.put(sizeof(EEPROM_SIGNATURE) + EEPROM_ALWAYS_ON, alwaysOn ? 1 : 0);
+  #endif
   EEPROM.put(sizeof(EEPROM_SIGNATURE) + EEPROM_COLOR, ledsMode);
   EEPROM.put(sizeof(EEPROM_SIGNATURE) + EEPROM_BRIGHTNESS, ledsBrightness);
   EEPROM.commit();
