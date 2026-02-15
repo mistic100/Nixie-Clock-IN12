@@ -1,6 +1,9 @@
-# Nixie Clock 2
+# Nixie Clock IN12
 
-([Check my first clock](https://github.com/mistic100/Nixie-Clock))
+Check out my other projects:
+- [Nixie Clock IN14](https://github.com/mistic100/Nixie-Clock-IN14)
+- [Nixie Clock IN2](https://github.com/mistic100/Nixie-Clock-IN2)
+- [IV-27 VFD Clock](https://github.com/mistic100/IV-27-Clock)
 
 This is a Nixie Clock design using IN-12 soviet neon tubes and an Arduino connected to a RTC clock. Two different cases are provided.
 
