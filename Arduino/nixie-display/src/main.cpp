@@ -183,8 +183,6 @@ void setup()
   button4.onSustain(ledsChangeBrightness);
 
   getTime();
-  Serial.print("Time at init: ");
-  printTime();
 
   on();
 }
@@ -450,11 +448,11 @@ void writeValue(
 void showTime()
 {
   writeValue(
-    (Hour / 10) % 10,
+    Hour / 10,
     Hour % 10,
-    (Minute / 10) % 10,
+    Minute / 10,
     Minute % 10,
-    (Second / 10) % 10,
+    Second / 10,
     Second % 10
   );
 }
@@ -493,6 +491,9 @@ void getTime()
   Hour = Clock.getHour(h12, pmtime);
   Minute = Clock.getMinute();
   Second = Clock.getSecond();
+  
+  Serial.print("Clock time: ");
+  printTime();
 }
 
 /**
@@ -786,5 +787,7 @@ void printTime()
   Serial.print(Hour);
   Serial.print(":");
   Serial.print(Minute);
+  Serial.print(":");
+  Serial.print(Second);
   Serial.println();
 }
